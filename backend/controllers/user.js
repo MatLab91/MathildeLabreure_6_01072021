@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sanitize = require('mongo-sanitize');
 
 const User = require('../models/user');
 
@@ -12,13 +13,12 @@ exports.signup = (req, res, next) => {
         password: hash
       });
       user.save()
-        .then(() => res.status(201).json({ message: 'Utilisateur créé !'}))
-        .catch(error => 
-            {
-              console.log(error);
-              return res.status(400).json({ error });
-            }
-          ); 
+        .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
+        .catch(error => {
+          console.log(error);
+          return res.status(400).json({ error });
+        }
+        );
     })
     .catch(error => res.status(500).json({ error }));
 };
@@ -26,7 +26,8 @@ exports.signup = (req, res, next) => {
 // Vérifie les informations d'identification de l'utilisateur, en renvoyant l'identifiant userID 
 // depuis la base de données et un jeton Web JSON signé (contenant également l'identifiant userID)
 exports.login = (req, res, next) => {
-  User.findOne({ email: req.body.email })
+  const cleanEmail = sanitize(req.body.email);
+  User.findOne({ email: cleanEmail })
     .then(user => {
       if (!user) {
         return res.status(401).json({ error: 'Utilisateur non trouvé !' });

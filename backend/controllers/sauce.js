@@ -2,9 +2,7 @@ const mongoDBSauce = require('../models/sauce');
 const fs = require('fs');
 
 
-// Capture et enregistre l'image, analyse la sauce en utilisant une chaîne de caractères 
-// et l'enregistre dans la base de données, en définissant correctement son image URL. 
-// Remet les sauces aimées et celles détestées à 0, et les sauces usersliked et celles usersdisliked aux tableaux vides.
+// Capture et enregistre l'image  et l'enregistre dans la base de données
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
   delete sauceObject._id;
@@ -17,19 +15,15 @@ exports.createSauce = (req, res, next) => {
     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
   });
   sauce.save()
-    .then(() => res.status(201).json({ message: 'Sauce enregistrée !'}))
+    .then(() => res.status(201).json({ message: 'Sauce enregistrée !' }))
     .catch(error => res.status(400).json({ error }));
 };
 
-/* Définit le statut "j'aime" pour userID fourni. 
-Si j'aime = 1, l'utilisateur aime la sauce. 
-Si j'aime = 0, l'utilisateur annule ce qu'il aime ou ce qu'il n'aime pas. 
-Si j'aime = -1, l'utilisateur n'aime pas la sauce. 
-L'identifiant de l'utilisateur doit être ajouté ou supprimé du tableau approprié, 
-en gardant une trace de ses préférences et en l'empêchant d'aimer ou de ne pas aimer la même sauce plusieurs fois. 
+/* Définit le statut "j'aime" ou "je n'aime pas" pour userID fourni. 
+L'identifiant de l'utilisateur doit être ajouté ou supprimé du tableau approprié,
 Nombre total de "j'aime" et de "je n'aime pas" à mettre à jour avec chaque "j'aime". */
 exports.likeSauce = (req, res, next) => {
-  mongoDBSauce.findOne({_id: req.params.id})
+  mongoDBSauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       let message = "Préférences acceptées";
       if (req.body.like == 1) {
@@ -40,7 +34,7 @@ exports.likeSauce = (req, res, next) => {
         sauce.usersDisliked.push(req.body.userId);
         sauce.dislikes += 1;
         message = "Sauce dislikée !";
-      } else { 
+      } else {
         // je vérifie que l'utilisateur est dans le tableau usersLiked
         let index = sauce.usersLiked.indexOf(req.body.userId);
         if (index > -1) {
@@ -65,21 +59,17 @@ exports.likeSauce = (req, res, next) => {
         .then(() => res.status(200).json({ message }))
         .catch(error => { console.log(error); return error; });
     })
-    .catch((error) => {console.log(error)});
+    .catch((error) => { console.log(error) });
 }
 
 // Renvoie la sauce avec l'ID fourni
 exports.getOneSauce = (req, res, next) => {
-    mongoDBSauce.findOne({_id: req.params.id})
-      .then((sauce) => {res.status(200).json(sauce);})
-      .catch((error) => {res.status(404).json({error: error});});
+  mongoDBSauce.findOne({ _id: req.params.id})
+    .then((sauce) => { res.status(200).json(sauce); })
+    .catch((error) => { res.status(404).json({ error: error }); });
 };
 
-/* Met à jour la sauce avec l'identifiant fourni. Si une image est téléchargée, 
-capturez-la et mettez à jour l'image URL des sauces. 
-Si aucun fichier n'est fourni, les détails de la sauce figurent 
-directement dans le corps de la demande (req.body.name, req.body.heat etc). 
-Si un fichier est fourni, la sauce avec chaîne est en req.body.sauce. */
+// Permet de modifier la sauce avec l'identifiant fourni.
 exports.modifySauce = (req, res, next) => {
   const sauceObject = req.file ?
     {
@@ -87,7 +77,7 @@ exports.modifySauce = (req, res, next) => {
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     } : { ...req.body };
   mongoDBSauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-    .then(() => res.status(200).json({ message: 'Sauce modifiée !'}))
+    .then(() => res.status(200).json({ message: 'Sauce modifiée !' }))
     .catch(error => res.status(400).json({ error }));
 };
 
@@ -99,7 +89,7 @@ exports.deleteSauce = (req, res, next) => {
       const filename = sauce.imageUrl.split('/images/')[1];
       fs.unlink(`images/${filename}`, () => {
         mongoDBSauce.deleteOne({ _id: req.params.id })
-          .then(() => res.status(200).json({ message: 'Sauce supprimée !'}))
+          .then(() => res.status(200).json({ message: 'Sauce supprimée !' }))
           .catch(error => res.status(400).json({ error }));
       });
     })
@@ -109,6 +99,6 @@ exports.deleteSauce = (req, res, next) => {
 // Renvoie le tableau de toutes les sauces dans la base de données
 exports.getAllSauces = (req, res, next) => {
   mongoDBSauce.find()
-  .then((sauces) => {res.status(200).json(sauces);})
-  .catch((error) => {res.status(400).json({error: error});});
+    .then((sauces) => { res.status(200).json(sauces); })
+    .catch((error) => { res.status(400).json({ error: error }); });
 };
